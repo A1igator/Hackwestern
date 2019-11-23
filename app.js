@@ -55,22 +55,24 @@ app.post('/:user/setup', (req, res) => {
         if (user in jsonParsed) {
             res.send('user already exists');
         } else {
-            let positions;
-            if (risk >= 0 && risk < 33) {
-                positions = {"AAPL": 5};
-            } else if (risk < 66) {
-                positions = {"GOOG": 2};
-            } else if (risk <= 100) {
-                positions = {"TSLA": 10};
-            } else {
-                res.send('invalid risk');
-                return;
-            }
+            let positions = {};
             let money = 0;
-            for (position in positions) {
-                const response = await fetch(`https://financialmodelingprep.com/api/v3/stock/real-time-price/${position}`);
-                const { price } = await response.json();
-                money += price * positions[position];
+            if (risk !== undefined) {
+                if (risk >= 0 && risk < 33) {
+                    positions = {"AAPL": 5};
+                } else if (risk < 66) {
+                    positions = {"GOOG": 2};
+                } else if (risk <= 100) {
+                    positions = {"TSLA": 10};
+                } else {
+                    res.send('invalid risk');
+                    return;
+                }
+                for (position in positions) {
+                    const response = await fetch(`https://financialmodelingprep.com/api/v3/stock/real-time-price/${position}`);
+                    const { price } = await response.json();
+                    money += price * positions[position];
+                }
             }
             jsonParsed[user] = {balance: 5000 - money, positions };
             fs.writeFile("users.json", JSON.stringify(jsonParsed));
