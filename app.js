@@ -100,7 +100,7 @@ app.post('/:user/buy', async (req, res) => {
                 fs.writeFile("users.json", JSON.stringify(jsonParsed));
                 res.send({success: true});
             } else {
-                res.send({success: false, error: 'Insufficient funds to make that purchase.');
+                res.send({success: false, error: 'Insufficient funds to make that purchase.'});
             }
         } else {
             res.send({success: false, error: 'Unknown user.'});
