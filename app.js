@@ -9,7 +9,7 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 app.use(bodyParser.json());
-
+fs.writeFile("/tmp/users.json", JSON.stringify({}), (err) => {console.log(err)});
 app.get('/', (_, res) => {
   res
     .status(200)
@@ -20,7 +20,7 @@ app.get('/', (_, res) => {
 app.get('/:user/balance', (req, res) => {
     const { user } = req.params;
 
-    fs.readFile('users.json', (err, data) => { 
+    fs.readFile('/tmp/users.json', (err, data) => { 
         const jsonParsed = JSON.parse(data);
  
         if (user in jsonParsed) {
@@ -34,7 +34,7 @@ app.get('/:user/balance', (req, res) => {
 app.get('/:user/positions', (req, res) => {
     const { user } = req.params;
 
-    fs.readFile('users.json', (err, data) => { 
+    fs.readFile('/tmp/users.json', (err, data) => { 
         const jsonParsed = JSON.parse(data);
  
         if (user in jsonParsed) {
@@ -49,7 +49,7 @@ app.post('/:user/setup', (req, res) => {
     const { user } = req.params;
     const { risk } = req.body;
 
-    fs.readFile('users.json', async (err, data) => { 
+    fs.readFile('/tmp/users.json', async (err, data) => { 
         const jsonParsed = JSON.parse(data);
  
         if (user in jsonParsed) {
@@ -75,7 +75,7 @@ app.post('/:user/setup', (req, res) => {
                 }
             }
             jsonParsed[user] = {balance: 5000 - money, positions };
-            fs.writeFile("users.json", JSON.stringify(jsonParsed));
+            fs.writeFile("/tmp/users.json", JSON.stringify(jsonParsed), (err) => {console.log(err)});
             res.sendStatus(200);
         }
     }); 
@@ -87,7 +87,14 @@ app.post('/:user/buy', async (req, res) => {
 
     const response = await fetch(`https://financialmodelingprep.com/api/v3/stock/real-time-price/${stock}`);
     const { price } = await response.json();
-    fs.readFile('users.json', (err, data) => { 
+
+    if (stock === undefined || amount === undefined) {
+        res.sendStatus(400);
+        return;
+    }
+
+    console.log(price, stock, amount);
+    fs.readFile('/tmp/users.json', (err, data) => { 
         const jsonParsed = JSON.parse(data);
         if (user in jsonParsed) {
             if ((price * amount) < jsonParsed[user].balance) {
@@ -97,7 +104,7 @@ app.post('/:user/buy', async (req, res) => {
                     jsonParsed[user].positions[stock] = amount;
                 }
                 jsonParsed[user].balance -= (price * amount);
-                fs.writeFile("users.json", JSON.stringify(jsonParsed));
+                fs.writeFile("/tmp/users.json", JSON.stringify(jsonParsed), (err) => {console.log(err)});
                 res.send({success: true});
             } else {
                 res.send({success: false, error: 'Insufficient funds to make that purchase.'});
@@ -114,13 +121,19 @@ app.post('/:user/sell', async (req, res) => {
 
     const response = await fetch(`https://financialmodelingprep.com/api/v3/stock/real-time-price/${stock}`);
     const { price } = await response.json();
-    fs.readFile('users.json', (err, data) => { 
+
+    if (stock === undefined || amount === undefined) {
+        res.sendStatus(400);
+        return;
+    }
+
+    fs.readFile('/tmp/users.json', (err, data) => { 
         const jsonParsed = JSON.parse(data);
         if (user in jsonParsed) {
             if (stock in jsonParsed[user].positions && (jsonParsed[user].positions[stock] - amount) >= 0) {
                 jsonParsed[user].positions[stock] -= amount;
                 jsonParsed[user].balance += (price * amount);
-                fs.writeFile("users.json", JSON.stringify(jsonParsed));
+                fs.writeFile("/tmp/users.json", JSON.stringify(jsonParsed), (err) => {console.log(err)});
                 res.sendStatus(200);
             } else {
                 res.send('you don\'t own that much of this stock');
