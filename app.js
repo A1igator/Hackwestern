@@ -98,12 +98,12 @@ app.post('/:user/buy', async (req, res) => {
                 }
                 jsonParsed[user].balance -= (price * amount);
                 fs.writeFile("users.json", JSON.stringify(jsonParsed));
-                res.sendStatus(200);
+                res.send({success: true});
             } else {
-                res.send('not enough money');
+                res.send({success: false, error: 'Insufficient funds to make that purchase.');
             }
         } else {
-            res.send('user doesn\'t exist');
+            res.send({success: false, error: 'Unknown user.'});
         }
     });
 });
